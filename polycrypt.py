@@ -16,7 +16,7 @@ class PolyArgument(Polynomial):
 		return (self + other) % self.refresh
 
 class Polycrypt:
-	def __init__(self, security=128, key=None):
+	def __init__(self, security=256, key=None):
 		self.security = security
 
 		if key:
@@ -49,22 +49,25 @@ class Polycrypt:
 
 	def decrypt(self, poly):
 		poly = (poly % self.key) % 2
-		d = poly.raw_coefs
-		return int(''.join(map(str, d))[::-1], 2)
+		return int(''.join(map(str, poly.raw_coefs))[::-1], 2)
 
 if __name__ == "__main__":
-	x = 0xFF
-	y = 0x21
+	x = 0xDEADBEEF
+	y = 0xCAFEBABE
 
 	poly = Polycrypt()
 	c1 = poly.encrypt(x)
 	c2 = poly.encrypt(y)
 
-	c3 = c1 ^ c2
 
-	print(str(x) + ':\t' + bin(x)[2:])
-	print(str(y) + ':\t' + bin(y)[2:])
-	print('or:\t' + bin(x & y)[2:])
-	print('us:\t' + bin(poly.decrypt(c3))[2:])
+	for i in range(100_000):
+		c3 = c1 ^ c2
 
-	# assert(bin(x ^ y)[2:] == bin(poly.decrypt(c3))[2:])
+	poly.decrypt(c3)
+
+		# print(str(x) + ':\t' + bin(x)[2:])
+		# print(str(y) + ':\t' + bin(y)[2:])
+		# print('or:\t' + bin(x ^ y)[2:])
+		# print('us:\t' + bin()[2:])
+
+		# # assert(bin(x ^ y)[2:] == bin(poly.decrypt(c3))[2:])
