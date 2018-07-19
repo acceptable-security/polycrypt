@@ -50,6 +50,19 @@ class Polynomial:
 		elif isinstance(other, int):
 			return Polynomial(list(map(lambda x: x * other, self.raw_coefs)))
 
+	def tmul(self, other):
+		assert(isinstance(other, Polynomial))
+
+		a = self.raw_coefs
+		b = other.raw_coefs
+
+		if len(a) < len(b):
+			a = a + [0] * (len(b) - len(a))
+		elif len(b) < len(a):
+			b = b + [0] * (len(a) - len(b))
+
+		return Polynomial(list(map(lambda x: x[0] * x[1], zip(a, b))))
+
 	def __mod__(self, other):
 		assert(isinstance(other, int))
 		return Polynomial(list(map(lambda x: x % other, self.raw_coefs)))
