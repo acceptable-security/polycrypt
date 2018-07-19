@@ -6,10 +6,12 @@ class Polynomial:
 		self.coefs = zip(coefs, range(len(coefs)))
 		self.red_coefs = list(filter(lambda tpl: tpl[0] != 0, self.coefs))
 
+	# Construct a polynomial from the bits of a number
 	@staticmethod
 	def from_number(number):
 		return Polynomial(list(map(int, bin(number)[2:]))[::-1])
 
+	# Evaluate a polynomial
 	def __call__(self, x):
 		assert(type(x) == int)
 		return sum(map(lambda tpl: tpl[0] * (x ** tpl[1]), self.red_coefs))
@@ -20,6 +22,7 @@ class Polynomial:
 	def __str__(self):
 		return ' + '.join(map(lambda tpl: str(tpl[0]) + 'x^' + str(tpl[1]), list(self.red_coefs)[::-1]))
 
+	# Add two polynomials
 	def __add__(self, other):
 		assert(isinstance(other, Polynomial))
 
@@ -33,6 +36,7 @@ class Polynomial:
 
 		return Polynomial(list(map(lambda x: sum(x), zip(a, b))))
 
+	# Multiply two polynomials
 	def __mul__(self, other):
 		assert(isinstance(other, Polynomial) or isinstance(other, int))
 
@@ -50,6 +54,7 @@ class Polynomial:
 		elif isinstance(other, int):
 			return Polynomial(list(map(lambda x: x * other, self.raw_coefs)))
 
+	# Do a term by term multiplication
 	def tmul(self, other):
 		assert(isinstance(other, Polynomial))
 
@@ -63,12 +68,15 @@ class Polynomial:
 
 		return Polynomial(list(map(lambda x: x[0] * x[1], zip(a, b))))
 
+	# Mod the coefficients
 	def __mod__(self, other):
 		assert(isinstance(other, int))
 		return Polynomial(list(map(lambda x: x % other, self.raw_coefs)))
 
+	# Get the number of coefficients
 	def __len__(self):
 		return len(self.raw_coefs)
 
+	# Determine if two things are equal
 	def __eq__(self, other):
 		return self.red_coefs == other.red_coefs
