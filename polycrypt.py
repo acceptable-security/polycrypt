@@ -3,20 +3,38 @@ from Crypto.Util import number
 import os
 
 class PolyArgument(Polynomial):
-	def __init__(self, coefs, refresh_key):
+	def __init__(self, coefs, refresh_key, o):
 		super().__init__(coefs)
 		self.refresh = refresh_key
+		self.o = o
 
 	def __and__(self, other):
 		assert(isinstance(other, PolyArgument))
-		return (self.tmul(other)) % self.refresh
+
+		out = self.tmul(other)
+		out.refresh = self.refresh
+		out.o = self.o
+
+		return out % self.refresh
 
 	def __xor__(self, other):
 		assert(isinstance(other, PolyArgument))
-		return (self + other) % self.refresh
+
+		out = self + other
+		out.refresh = self.refresh
+		out.o = self.o
+
+		return out % self.refresh
+
+	def __invert__(self):
+		out = self + self.o
+		out.refresh = self.refresh
+		out.o = self.o
+
+		return out % self.refresh
 
 class Polycrypt:
-	def __init__(self, security=256, key=None):
+	def __init__(self, security=128, key=None):
 		self.security = security
 
 		if key:
@@ -35,7 +53,7 @@ class Polycrypt:
 	def _gen_refresh(self):
 		self.refresh = self.key * (self._rand() & ~1)
 
-	def encrypt(self, message):
+	def _encrypt(self, message):
 		m = Polynomial.from_number(message)
 		n = len(m)
 		
@@ -45,7 +63,23 @@ class Polycrypt:
 
 		d = Polynomial(list(map(lambda x: self._rand(), range(n))))
 
-		return PolyArgument((y + d * self.key).raw_coefs, self.refresh)
+		return (y + d * self.key).raw_coefs
+
+	def encrypt(self, message):
+		# Generate correct bitlength of 1s
+		count = len(bin(message)) - 2
+		one = int('1' * count, 2)
+
+		# Encrypt the ones and message
+		_enc = self._encrypt(message)
+		_one = self._encrypt(one)
+
+		# Make a self refrential one polyarg
+		one = PolyArgument(_one, self.refresh, None)
+		one.o = one
+
+		# Make the enc polyarg with the one
+		return PolyArgument(_enc, self.refresh, one)
 
 	def decrypt(self, poly):
 		poly = (poly % self.key) % 2
@@ -53,21 +87,13 @@ class Polycrypt:
 
 if __name__ == "__main__":
 	x = 0xDEADBEEF
-	y = 0xCAFEBABE
+	y = 4
 
 	poly = Polycrypt()
-	c1 = poly.encrypt(x)
-	c2 = poly.encrypt(y)
+	o = poly.encrypt(0xFF)
+	a = poly.encrypt(x)
+	b = poly.encrypt(y)
 
-
-	for i in range(100_000):
-		c3 = c1 ^ c2
-
-	poly.decrypt(c3)
-
-		# print(str(x) + ':\t' + bin(x)[2:])
-		# print(str(y) + ':\t' + bin(y)[2:])
-		# print('or:\t' + bin(x ^ y)[2:])
-		# print('us:\t' + bin()[2:])
-
-		# # assert(bin(x ^ y)[2:] == bin(poly.decrypt(c3))[2:])
+	print(bin(x))
+	print(bin(poly.decrypt(~a)))
+	# print((~x & ~y))
